@@ -113,7 +113,8 @@
         align-items: center;
       }
 
-      #audioToggle {
+      #audioToggle,
+      #playPauseToggle {
         background-color: rgba(255, 255, 255, 0.5);
         border: none;
         padding: 10px;
@@ -121,6 +122,27 @@
         cursor: pointer;
         border-radius: 50%;
         outline: none;
+        margin-left: 10px;
+      }
+
+      #versionInfo {
+        position: absolute;
+        bottom: 5px;
+        left: 10px;
+        color: white;
+        font-size: 12px;
+      }
+
+      #copyrightInfo {
+        position: absolute;
+        bottom: 5px;
+        right: 10px;
+        color: white;
+        font-size: 12px;
+      }
+
+      #copyrightInfo a {
+        color: #ffc300;
       }
     </style>
   </head>
@@ -131,6 +153,7 @@
         Your browser does not support the audio element.
       </audio>
       <button id="audioToggle">🔊</button>
+      <button id="playPauseToggle">▶️</button>
     </div>
     <canvas id="gameCanvas"></canvas>
     <div id="startText">Select Difficulty to Start</div>
@@ -150,10 +173,20 @@
       <button id="right">▶</button>
     </div>
 
+    <div id="versionInfo">Version 1.0.1</div>
+    <div id="copyrightInfo">
+      © 2024 Car Racing Game by
+      <a href="https://github.com/JayeshMShinde" target="_blank"
+        >Jayesh Shinde</a
+      >
+    </div>
+
     <script>
       const backgroundMusic = document.getElementById("backgroundMusic");
       const audioToggle = document.getElementById("audioToggle");
+      const playPauseToggle = document.getElementById("playPauseToggle");
       let isPlaying = false;
+      let isPaused = false;
 
       // Toggle audio playback
       audioToggle.addEventListener("click", () => {
@@ -165,6 +198,18 @@
           audioToggle.innerHTML = "🔊"; // Change to sound on icon
         }
         isPlaying = !isPlaying;
+      });
+
+      // Toggle play/pause
+      playPauseToggle.addEventListener("click", () => {
+        if (isPaused) {
+          isGameRunning = true;
+          playPauseToggle.innerHTML = "⏸️"; // Change to pause icon
+        } else {
+          isGameRunning = false;
+          playPauseToggle.innerHTML = "▶️"; // Change to play icon
+        }
+        isPaused = !isPaused;
       });
 
       const canvas = document.getElementById("gameCanvas");
@@ -329,6 +374,7 @@
             gameOver = true;
             document.getElementById("gameOverText").style.display = "block";
             isGameRunning = false;
+            playPauseToggle.innerHTML = "▶️"; // Change to play icon when game over
           }
         }
         requestAnimationFrame(gameLoop);
@@ -344,6 +390,8 @@
         document.getElementById("gameOverText").style.display = "none";
         isGameRunning = true;
         gameOver = false;
+        isPaused = false;
+        playPauseToggle.innerHTML = "⏸️"; // Change to pause icon when game starts
 
         for (let i = 0; i < maxComputerCars; i++) {
           createComputerCar();
