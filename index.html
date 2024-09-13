@@ -12,7 +12,7 @@
       }
 
       body {
-        background-color: #333;
+        background-color: #111;
         font-family: Arial, sans-serif;
         display: flex;
         justify-content: center;
@@ -24,7 +24,7 @@
 
       canvas {
         border: 5px solid white;
-        background-color: #111;
+        background-color: #404040;
       }
 
       #startText,
@@ -169,8 +169,8 @@
     <div id="controls">
       <button id="up">▲</button>
       <button id="left">◀</button>
-      <button id="down">▼</button>
       <button id="right">▶</button>
+      <button id="down">▼</button>
     </div>
 
     <div id="versionInfo">Version 1.0.2</div>
@@ -246,7 +246,7 @@
       playerCar.image.src = carImageSources[0];
 
       const computerCars = [];
-      const directions = ["up", "down"];
+      const directions = ["down"];
       let maxComputerCars = 20;
       let isGameRunning = false;
       let score = 0;
@@ -285,12 +285,26 @@
       }
 
       function createComputerCar() {
-        const randomX = Math.random() * (canvas.width - 40);
-        const randomY = Math.random() * canvas.height;
-        const randomDirection =
-          directions[Math.floor(Math.random() * directions.length)];
-        const randomImageIndex =
-          Math.floor(Math.random() * (carImageSources.length - 1)) + 1;
+        let randomX, randomY, randomDirection, randomImageIndex;
+        let isOverlapping = true;
+
+        while (isOverlapping) {
+          randomX = Math.random() * (canvas.width - 40);
+          randomY = Math.random() * canvas.height;
+          randomDirection =
+            directions[Math.floor(Math.random() * directions.length)];
+          randomImageIndex =
+            Math.floor(Math.random() * (carImageSources.length - 1)) + 1;
+
+          isOverlapping = computerCars.some((car) => {
+            return (
+              randomX < car.x + car.width &&
+              randomX + 40 > car.x &&
+              randomY < car.y + car.height &&
+              randomY + 60 > car.y
+            );
+          });
+        }
 
         const computerCar = {
           x: randomX,
