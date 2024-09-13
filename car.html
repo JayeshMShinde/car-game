@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Racing Game</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #333;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+      }
+
+      canvas {
+        border: 5px solid white;
+        background-color: #111;
+      }
+
+      #startText,
+      #scoreText,
+      #gameOverText,
+      #difficultySelector {
+        color: white;
+        font-size: 20px;
+        position: absolute;
+        width: 100%;
+        text-align: center;
+      }
+
+      #startText {
+        top: 20px;
+      }
+      #scoreText {
+        top: 40px;
+      }
+      #gameOverText {
+        top: 50%;
+        display: none;
+      }
+
+      #difficultySelector {
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #difficultySelector button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="startText">Select Difficulty to Start</div>
+    <div id="scoreText">Score: 0</div>
+    <div id="gameOverText">Game Over! Press SPACE to Restart</div>
+    <div id="difficultySelector">
+      <button id="easy">Easy</button>
+      <button id="medium">Medium</button>
+      <button id="hard">Hard</button>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const carImageSources = ["1.png", "2.png", "3.png", "4.png"];
+
+      const playerCar = {
+        x: 400,
+        y: 500,
+        width: 40,
+        height: 60,
+        color: "lime",
+        speed: 5,
+        dx: 0,
+        dy: 0,
+        image: new Image(),
+      };
+      playerCar.image.src = carImageSources[0];
+
+      const computerCars = [];
+      const directions = ["up", "down"];
+      let maxComputerCars = 20;
+      let isGameRunning = false;
+      let score = 0;
+      let gameOver = false;
+      let difficulty = "";
+
+      const road = {
+        y: 0,
+        speed: 4,
+        stripeHeight: 20,
+        gapHeight: 40,
+        stripeWidth: 10,
+        stripeX: canvas.width / 2 - 5,
+      };
+
+      function setDifficulty(level) {
+        difficulty = level;
+        switch (level) {
+          case "easy":
+            maxComputerCars = 5;
+            road.speed = 3;
+            break;
+          case "medium":
+            maxComputerCars = 15;
+            road.speed = 5;
+            break;
+          case "hard":
+            maxComputerCars = 25;
+            road.speed = 10;
+            break;
+        }
+        resetGame();
+      }
+
+      function createComputerCar() {
+        const randomX = Math.random() * (canvas.width - 40);
+        const randomY = Math.random() * canvas.height;
+        const randomDirection =
+          directions[Math.floor(Math.random() * directions.length)];
+        const randomImageIndex =
+          Math.floor(Math.random() * (carImageSources.length - 1)) + 1;
+
+        const computerCar = {
+          x: randomX,
+          y: randomY,
+          width: 40,
+          height: 60,
+          speed:
+            difficulty === "easy" ? 1.5 : difficulty === "medium" ? 2 : 2.5,
+          direction: randomDirection,
+          image: new Image(),
+        };
+        computerCar.image.src = carImageSources[randomImageIndex];
+        computerCars.push(computerCar);
+      }
+
+      function drawRoad() {
+        road.y += road.speed;
+        if (road.y >= road.stripeHeight + road.gapHeight) {
+          road.y = 0;
+        }
+        for (
+          let i = road.y;
+          i < canvas.height;
+          i += road.stripeHeight + road.gapHeight
+        ) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(road.stripeX, i, road.stripeWidth, road.stripeHeight);
+        }
+      }
+
+      function drawCar(car) {
+        ctx.drawImage(car.image, car.x, car.y, car.width, car.height);
+      }
+
+      function movePlayer() {
+        playerCar.x += playerCar.dx;
+        playerCar.y += playerCar.dy;
+
+        if (playerCar.x < 0) playerCar.x = 0;
+        if (playerCar.x > canvas.width - playerCar.width)
+          playerCar.x = canvas.width - playerCar.width;
+        if (playerCar.y < 0) playerCar.y = 0;
+        if (playerCar.y > canvas.height - playerCar.height)
+          playerCar.y = canvas.height - playerCar.height;
+      }
+
+      function moveComputerCars() {
+        computerCars.forEach((car) => {
+          if (car.direction === "down") {
+            car.y += car.speed;
+          } else {
+            car.y -= car.speed;
+          }
+          if (car.y > canvas.height || car.y < -60) {
+            car.y = car.direction === "down" ? -60 : canvas.height + 60;
+            car.x = Math.random() * (canvas.width - 40);
+          }
+        });
+      }
+
+      function detectCollision() {
+        return computerCars.some((car) => {
+          return (
+            playerCar.x < car.x + car.width &&
+            playerCar.x + playerCar.width > car.x &&
+            playerCar.y < car.y + car.height &&
+            playerCar.y + playerCar.height > car.y
+          );
+        });
+      }
+
+      function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function gameLoop() {
+        if (isGameRunning && !gameOver) {
+          clearCanvas();
+          drawRoad();
+          movePlayer();
+          moveComputerCars();
+          drawCar(playerCar);
+          computerCars.forEach(drawCar);
+          score += 1;
+          document.getElementById("scoreText").innerText = `Score: ${score}`;
+
+          if (detectCollision()) {
+            gameOver = true;
+            document.getElementById("gameOverText").style.display = "block";
+            isGameRunning = false;
+          }
+        }
+        requestAnimationFrame(gameLoop);
+      }
+
+      function resetGame() {
+        playerCar.x = 400;
+        playerCar.y = 500;
+        playerCar.dx = 0;
+        playerCar.dy = 0;
+        computerCars.length = 0;
+        score = 0;
+        document.getElementById("gameOverText").style.display = "none";
+        document.getElementById("difficultySelector").style.display = "none";
+        document.getElementById("startText").innerText =
+          "Press SPACE to Start/Restart";
+        for (let i = 0; i < maxComputerCars; i++) {
+          createComputerCar();
+        }
+        gameOver = false;
+        isGameRunning = true;
+      }
+
+      function handleKeydown(e) {
+        if (!isGameRunning && e.code === "Space") {
+          if (difficulty) {
+            resetGame();
+          } else {
+            document.getElementById("difficultySelector").style.display =
+              "flex";
+          }
+          return;
+        }
+
+        if (e.key === "w") {
+          playerCar.dx = 0;
+          playerCar.dy = -playerCar.speed;
+        } else if (e.key === "s") {
+          playerCar.dx = 0;
+          playerCar.dy = playerCar.speed;
+        } else if (e.key === "a") {
+          playerCar.dx = -playerCar.speed;
+          playerCar.dy = 0;
+        } else if (e.key === "d") {
+          playerCar.dx = playerCar.speed;
+          playerCar.dy = 0;
+        }
+      }
+
+      function handleKeyup(e) {
+        if (["w", "s", "a", "d"].includes(e.key)) {
+          playerCar.dx = 0;
+          playerCar.dy = 0;
+        }
+      }
+
+      window.addEventListener("keydown", handleKeydown);
+      window.addEventListener("keyup", handleKeyup);
+
+      document
+        .getElementById("easy")
+        .addEventListener("click", () => setDifficulty("easy"));
+      document
+        .getElementById("medium")
+        .addEventListener("click", () => setDifficulty("medium"));
+      document
+        .getElementById("hard")
+        .addEventListener("click", () => setDifficulty("hard"));
+
+      playerCar.image.onload = () => {
+        gameLoop();
+      };
+    </script>
+  </body>
+</html>
