@@ -185,7 +185,7 @@
       const backgroundMusic = document.getElementById("backgroundMusic");
       const audioToggle = document.getElementById("audioToggle");
       const playPauseToggle = document.getElementById("playPauseToggle");
-      let isPlaying = false;
+      let isPlaying = true; // Set to true to start with music on
       let isPaused = false;
 
       // Toggle audio playback
@@ -210,6 +210,13 @@
           playPauseToggle.innerHTML = "▶️"; // Change to play icon
         }
         isPaused = !isPaused;
+      });
+
+      // Show difficulty selector and start text when the page loads
+      window.addEventListener("load", () => {
+        document.getElementById("difficultySelector").style.display = "flex";
+        document.getElementById("startText").style.display = "block";
+        backgroundMusic.play(); // Start playing music by default
       });
 
       const canvas = document.getElementById("gameCanvas");
