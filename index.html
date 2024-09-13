@@ -19,6 +19,7 @@
         align-items: center;
         height: 100vh;
         position: relative;
+        overflow: hidden;
       }
 
       canvas {
@@ -38,11 +39,13 @@
       }
 
       #startText {
-        top: 20px;
+        top: 10px;
       }
+
       #scoreText {
         top: 40px;
       }
+
       #gameOverText {
         top: 50%;
         display: none;
@@ -51,7 +54,7 @@
       #difficultySelector {
         top: 50%;
         transform: translateY(-50%);
-        display: flex;
+        display: none;
         flex-direction: column;
         align-items: center;
       }
@@ -62,28 +65,83 @@
         font-size: 18px;
         cursor: pointer;
       }
+
+      /* Mobile Controls */
+      #controls {
+        position: absolute;
+        bottom: 20px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        visibility: hidden;
+      }
+
+      #controls button {
+        background-color: rgba(255, 255, 255, 0.5);
+        border: none;
+        padding: 20px;
+        margin: 5px;
+        font-size: 20px;
+        cursor: pointer;
+        border-radius: 10px;
+      }
+
+      @media (max-width: 768px) {
+        canvas {
+          width: 100vw;
+          height: 80vh;
+        }
+
+        #controls {
+          visibility: visible;
+        }
+
+        #difficultySelector {
+          font-size: 18px;
+        }
+
+        #difficultySelector button {
+          font-size: 16px;
+        }
+      }
     </style>
   </head>
   <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="startText">Select Difficulty to Start</div>
     <div id="scoreText">Score: 0</div>
-    <div id="gameOverText">Game Over! Press SPACE to Restart</div>
+    <div id="gameOverText">Game Over! Press SPACE or Tap to Restart</div>
     <div id="difficultySelector">
       <button id="easy">Easy</button>
       <button id="medium">Medium</button>
       <button id="hard">Hard</button>
     </div>
 
+    <!-- On-Screen Mobile Controls -->
+    <div id="controls">
+      <button id="up">▲</button>
+      <button id="left">◀</button>
+      <button id="down">▼</button>
+      <button id="right">▶</button>
+    </div>
+
     <script>
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
 
-      const carImageSources = ["1.png", "2.png", "3.png", "4.png"];
+      // Set canvas size based on the device screen
+      function resizeCanvas() {
+        canvas.width = window.innerWidth > 800 ? 800 : window.innerWidth;
+        canvas.height =
+          window.innerHeight > 600 ? 600 : window.innerHeight * 0.8;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
 
+      const carImageSources = ["1.png", "2.png", "3.png", "4.png"];
       const playerCar = {
-        x: 400,
-        y: 500,
+        x: canvas.width / 2 - 20,
+        y: canvas.height - 100,
         width: 40,
         height: 60,
         color: "lime",
@@ -127,6 +185,9 @@
             road.speed = 8;
             break;
         }
+        // Hide difficulty selector and start text
+        document.getElementById("difficultySelector").style.display = "none";
+        document.getElementById("startText").style.display = "none";
         resetGame();
       }
 
@@ -233,58 +294,99 @@
       }
 
       function resetGame() {
-        playerCar.x = 400;
-        playerCar.y = 500;
+        playerCar.x = canvas.width / 2 - 20;
+        playerCar.y = canvas.height - 100;
         playerCar.dx = 0;
         playerCar.dy = 0;
         computerCars.length = 0;
         score = 0;
         document.getElementById("gameOverText").style.display = "none";
-        document.getElementById("difficultySelector").style.display = "none";
-        document.getElementById("startText").innerText =
-          "Press SPACE to Start/Restart";
+        isGameRunning = true;
+        gameOver = false;
+
         for (let i = 0; i < maxComputerCars; i++) {
           createComputerCar();
         }
-        gameOver = false;
-        isGameRunning = true;
       }
 
-      function handleKeydown(e) {
-        if (!isGameRunning && e.code === "Space") {
-          if (difficulty) {
-            resetGame();
-          } else {
-            document.getElementById("difficultySelector").style.display =
-              "flex";
-          }
-          return;
-        }
-
-        if (e.key === "w") {
-          playerCar.dx = 0;
-          playerCar.dy = -playerCar.speed;
-        } else if (e.key === "s") {
-          playerCar.dx = 0;
-          playerCar.dy = playerCar.speed;
-        } else if (e.key === "a") {
-          playerCar.dx = -playerCar.speed;
-          playerCar.dy = 0;
-        } else if (e.key === "d") {
-          playerCar.dx = playerCar.speed;
-          playerCar.dy = 0;
+      function handleKeyDown(event) {
+        switch (event.key) {
+          case "ArrowLeft":
+            playerCar.dx = -playerCar.speed;
+            break;
+          case "ArrowRight":
+            playerCar.dx = playerCar.speed;
+            break;
+          case "ArrowUp":
+            playerCar.dy = -playerCar.speed;
+            break;
+          case "ArrowDown":
+            playerCar.dy = playerCar.speed;
+            break;
         }
       }
 
-      function handleKeyup(e) {
-        if (["w", "s", "a", "d"].includes(e.key)) {
-          playerCar.dx = 0;
-          playerCar.dy = 0;
+      function handleKeyUp(event) {
+        switch (event.key) {
+          case "ArrowLeft":
+          case "ArrowRight":
+            playerCar.dx = 0;
+            break;
+          case "ArrowUp":
+          case "ArrowDown":
+            playerCar.dy = 0;
+            break;
         }
       }
 
-      window.addEventListener("keydown", handleKeydown);
-      window.addEventListener("keyup", handleKeyup);
+      // Mobile control functions
+      function moveCarLeft() {
+        playerCar.dx = -playerCar.speed;
+      }
+
+      function moveCarRight() {
+        playerCar.dx = playerCar.speed;
+      }
+
+      function moveCarUp() {
+        playerCar.dy = -playerCar.speed;
+      }
+
+      function moveCarDown() {
+        playerCar.dy = playerCar.speed;
+      }
+
+      function stopCarMovement() {
+        playerCar.dx = 0;
+        playerCar.dy = 0;
+      }
+
+      // Mobile Control Button Handlers
+      document
+        .getElementById("left")
+        .addEventListener("touchstart", moveCarLeft);
+      document
+        .getElementById("left")
+        .addEventListener("touchend", stopCarMovement);
+      document
+        .getElementById("right")
+        .addEventListener("touchstart", moveCarRight);
+      document
+        .getElementById("right")
+        .addEventListener("touchend", stopCarMovement);
+      document.getElementById("up").addEventListener("touchstart", moveCarUp);
+      document
+        .getElementById("up")
+        .addEventListener("touchend", stopCarMovement);
+      document
+        .getElementById("down")
+        .addEventListener("touchstart", moveCarDown);
+      document
+        .getElementById("down")
+        .addEventListener("touchend", stopCarMovement);
+
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
 
       document
         .getElementById("easy")
@@ -296,9 +398,25 @@
         .getElementById("hard")
         .addEventListener("click", () => setDifficulty("hard"));
 
-      playerCar.image.onload = () => {
-        gameLoop();
-      };
+      window.addEventListener("keydown", (e) => {
+        if (e.key === " " && gameOver) {
+          resetGame();
+        }
+      });
+
+      window.addEventListener("click", () => {
+        if (gameOver) {
+          resetGame();
+        }
+      });
+
+      // Show difficulty selector and start text when the page loads
+      window.addEventListener("load", () => {
+        document.getElementById("difficultySelector").style.display = "flex";
+        document.getElementById("startText").style.display = "block";
+      });
+
+      requestAnimationFrame(gameLoop);
     </script>
   </body>
 </html>
