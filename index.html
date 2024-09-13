@@ -104,9 +104,34 @@
           font-size: 16px;
         }
       }
+
+      #audioControls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        align-items: center;
+      }
+
+      #audioToggle {
+        background-color: rgba(255, 255, 255, 0.5);
+        border: none;
+        padding: 10px;
+        font-size: 20px;
+        cursor: pointer;
+        border-radius: 50%;
+        outline: none;
+      }
     </style>
   </head>
   <body>
+    <div id="audioControls">
+      <audio id="backgroundMusic" loop>
+        <source src="./game-music.mp3" type="audio/mp3" />
+        Your browser does not support the audio element.
+      </audio>
+      <button id="audioToggle">🔊</button>
+    </div>
     <canvas id="gameCanvas"></canvas>
     <div id="startText">Select Difficulty to Start</div>
     <div id="scoreText">Score: 0</div>
@@ -126,6 +151,22 @@
     </div>
 
     <script>
+      const backgroundMusic = document.getElementById("backgroundMusic");
+      const audioToggle = document.getElementById("audioToggle");
+      let isPlaying = false;
+
+      // Toggle audio playback
+      audioToggle.addEventListener("click", () => {
+        if (isPlaying) {
+          backgroundMusic.pause();
+          audioToggle.innerHTML = "🔇"; // Change to muted icon
+        } else {
+          backgroundMusic.play();
+          audioToggle.innerHTML = "🔊"; // Change to sound on icon
+        }
+        isPlaying = !isPlaying;
+      });
+
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
 
