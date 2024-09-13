@@ -414,9 +414,12 @@
         isPaused = false;
         playPauseToggle.innerHTML = "⏸️"; // Change to pause icon when game starts
 
-        for (let i = 0; i < maxComputerCars; i++) {
-          createComputerCar();
-        }
+        // Delay the creation of computer cars
+        setTimeout(() => {
+          for (let i = 0; i < maxComputerCars; i++) {
+            createComputerCar();
+          }
+        }, 3000); // 3 seconds delay
       }
 
       function handleKeyDown(event) {
