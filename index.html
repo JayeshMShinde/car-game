@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
     <title>Car Racing Game</title>
     <style>
       * {
@@ -30,7 +31,8 @@
       #startText,
       #scoreText,
       #gameOverText,
-      #difficultySelector {
+      #difficultySelector,
+      #livesText {
         color: white;
         font-size: 20px;
         position: absolute;
@@ -44,6 +46,10 @@
 
       #scoreText {
         top: 40px;
+      }
+
+      #livesText {
+        top: 70px;
       }
 
       #gameOverText {
@@ -162,6 +168,7 @@
     <canvas id="gameCanvas"></canvas>
     <div id="startText">Select Difficulty to Start</div>
     <div id="scoreText">Score: 0</div>
+    <div id="livesText">Lives: ❤️</div>
     <div id="gameOverText">Game Over! Press SPACE or Tap to Restart</div>
     <div id="difficultySelector">
       <button id="easy">Easy</button>
@@ -253,6 +260,8 @@
         dx: 0,
         dy: 0,
         image: new Image(),
+        lives: 1,
+        rotation: 0,
       };
       playerCar.image.src = carImageSources[0];
 
@@ -298,8 +307,10 @@
       function createComputerCar() {
         let randomX, randomY, randomDirection, randomImageIndex;
         let isOverlapping = true;
+        let attempts = 0;
+        const maxAttempts = 100;
 
-        while (isOverlapping) {
+        while (isOverlapping && attempts < maxAttempts) {
           randomX = Math.random() * (canvas.width - 40);
           randomY = Math.random() * canvas.height;
           randomDirection =
@@ -307,14 +318,33 @@
           randomImageIndex =
             Math.floor(Math.random() * (carImageSources.length - 1)) + 1;
 
+          // Check overlap with other computer cars
           isOverlapping = computerCars.some((car) => {
             return (
-              randomX < car.x + car.width &&
-              randomX + 40 > car.x &&
-              randomY < car.y + car.height &&
-              randomY + 60 > car.y
+              randomX < car.x + car.width + 20 &&
+              randomX + 40 + 20 > car.x &&
+              randomY < car.y + car.height + 20 &&
+              randomY + 60 + 20 > car.y
             );
           });
+
+          // Check overlap with player car
+          if (!isOverlapping) {
+            isOverlapping =
+              randomX < playerCar.x + playerCar.width + 40 &&
+              randomX + 40 + 40 > playerCar.x &&
+              randomY < playerCar.y + playerCar.height + 40 &&
+              randomY + 60 + 40 > playerCar.y;
+          }
+
+          attempts++;
+        }
+
+        if (attempts >= maxAttempts) {
+          console.log(
+            "Failed to find a non-overlapping position for a new car"
+          );
+          return;
         }
 
         const computerCar = {
@@ -347,7 +377,17 @@
       }
 
       function drawCar(car) {
-        ctx.drawImage(car.image, car.x, car.y, car.width, car.height);
+        ctx.save();
+        ctx.translate(car.x + car.width / 2, car.y + car.height / 2);
+        ctx.rotate((car.rotation * Math.PI) / 180);
+        ctx.drawImage(
+          car.image,
+          -car.width / 2,
+          -car.height / 2,
+          car.width,
+          car.height
+        );
+        ctx.restore();
       }
 
       function movePlayer() {
@@ -403,10 +443,19 @@
           document.getElementById("scoreText").innerText = `Score: ${score}`;
 
           if (detectCollision()) {
-            gameOver = true;
-            document.getElementById("gameOverText").style.display = "block";
-            isGameRunning = false;
-            playPauseToggle.innerHTML = "▶️"; // Change to play icon when game over
+            playerCar.lives -= 1;
+            document.getElementById("livesText").innerText = `Lives: ${"❤️".repeat(playerCar.lives)}`;
+            playerCar.rotation += 90;
+            if (playerCar.lives <= 0) {
+              gameOver = true;
+              document.getElementById("gameOverText").style.display = "block";
+              isGameRunning = false;
+              playPauseToggle.innerHTML = "▶️"; // Change to play icon when game over
+            } else {
+              setTimeout(() => {
+                playerCar.rotation = 0;
+              }, 1000); // Reset rotation after 1 second
+            }
           }
         }
         requestAnimationFrame(gameLoop);
@@ -417,9 +466,12 @@
         playerCar.y = canvas.height - 100;
         playerCar.dx = 0;
         playerCar.dy = 0;
+        playerCar.lives = 1;
+        playerCar.rotation = 0;
         computerCars.length = 0;
         score = 0;
         document.getElementById("gameOverText").style.display = "none";
+        document.getElementById("livesText").innerText = `Lives: ${"❤️".repeat(playerCar.lives)}`;
         isGameRunning = true;
         gameOver = false;
         isPaused = false;
@@ -430,7 +482,17 @@
           for (let i = 0; i < maxComputerCars; i++) {
             createComputerCar();
           }
-        }, 3000); // 3 seconds delay
+        }, 3000); // 3 seconds delay 
+
+        let carsSpawned = 0;
+        const spawnInterval = setInterval(() => {
+          if (carsSpawned < maxComputerCars) {
+            createComputerCar();
+            carsSpawned++;
+          } else {
+            clearInterval(spawnInterval);
+          }
+        }, 500); // Spawn a car every 500ms
       }
 
       function handleKeyDown(event) {
