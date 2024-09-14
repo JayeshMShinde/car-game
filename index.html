@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="./images/favicon.ico" />
     <title>Car Racing Game</title>
     <style>
       * {
@@ -159,7 +159,7 @@
   <body>
     <div id="audioControls">
       <audio id="backgroundMusic" loop>
-        <source src="./game-music.mp3" type="audio/mp3" />
+        <source src="./media/game-music.mp3" type="audio/mp3" />
         Your browser does not support the audio element.
       </audio>
       <button id="audioToggle">🔊</button>
@@ -444,7 +444,9 @@
 
           if (detectCollision()) {
             playerCar.lives -= 1;
-            document.getElementById("livesText").innerText = `Lives: ${"❤️".repeat(playerCar.lives)}`;
+            document.getElementById(
+              "livesText"
+            ).innerText = `Lives: ${"❤️".repeat(playerCar.lives)}`;
             playerCar.rotation += 90;
             if (playerCar.lives <= 0) {
               gameOver = true;
@@ -471,7 +473,9 @@
         computerCars.length = 0;
         score = 0;
         document.getElementById("gameOverText").style.display = "none";
-        document.getElementById("livesText").innerText = `Lives: ${"❤️".repeat(playerCar.lives)}`;
+        document.getElementById("livesText").innerText = `Lives: ${"❤️".repeat(
+          playerCar.lives
+        )}`;
         isGameRunning = true;
         gameOver = false;
         isPaused = false;
@@ -482,7 +486,7 @@
           for (let i = 0; i < maxComputerCars; i++) {
             createComputerCar();
           }
-        }, 3000); // 3 seconds delay 
+        }, 3000); // 3 seconds delay
 
         let carsSpawned = 0;
         const spawnInterval = setInterval(() => {
